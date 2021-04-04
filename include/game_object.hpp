@@ -23,14 +23,15 @@ public:
 
     void restore();
     void setLocalTransform(const glm::mat4&);
+    void transformGlobal(const glm::mat4&);
 
     virtual bool intersects(const GameObject* ) = 0;
 
     virtual ObjectType getType() const = 0;
 
+    glm::mat4 worldTrans;
 
 protected:
-    glm::mat4 worldTrans;
     glm::mat4 localTrans;
 
 };

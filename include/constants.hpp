@@ -115,6 +115,8 @@ const float FOV = glm::radians(45.0f);
 const double PLAYER_MOUSE_SENSITIVITY = 0.005; 
 const float PLAYER_SPEED = 2;
 
+const float ORBIT_RATE = glm::radians(45.0f);
+
 struct Vector
 {
 

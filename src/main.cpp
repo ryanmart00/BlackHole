@@ -9,7 +9,6 @@
 #include <iostream> 
 #include <tgmath.h>
 #include <vector>
-#define STB_IMAGE_IMPLEMENTATION
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
@@ -41,7 +40,7 @@ void transform(const glm::mat4& t);
 void restore();
 
 std::vector<GameObject*> objects;
-Camera cam{glm::vec3{3,0,0}, glm::vec3{-1,0,1}, glm::vec3{0,1,0}};
+Camera cam{glm::vec3{5,0,0}, glm::vec3{-1,0,1}, glm::vec3{0,1,0}};
 
 unsigned int quadVAO = 0;
 unsigned int quadVBO;
@@ -157,12 +156,11 @@ int main()
     
     GameObject* g1 = new SphereObject{glm::vec3{0,0,3}, RGB{255,0,0}, 0.5f};
     GameObject* g2 = new SphereObject{glm::vec3{0,4,0}, RGB{0,255,0}, 0.5f};
-
+    GameObject* g3 = new SphereObject{glm::vec3{0,0,-4}, RGB{0,0,255}, 0.5f};
     
     objects.push_back(g1);
     objects.push_back(g2);
-
-
+    objects.push_back(g3);
 
 
     GLuint image = colorTexture();
@@ -179,6 +177,10 @@ int main()
         lastFrame = currentFrame;
         // Update objects
 
+        g2->worldTrans = glm::translate(glm::identity<glm::mat4>(), 
+                glm::vec3{0, 4.0f*cos(ORBIT_RATE * glfwGetTime()), 0});
+        g3->transformGlobal(glm::mat4{glm::angleAxis(ORBIT_RATE * dt, UP)});
+        
 		//Clear
 		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);

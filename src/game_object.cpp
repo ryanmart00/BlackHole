@@ -23,6 +23,11 @@ void GameObject::setLocalTransform(const glm::mat4& t)
     localTrans = t * worldTrans;
 }
 
+void GameObject::transformGlobal(const glm::mat4& t)
+{
+    worldTrans = t * worldTrans;
+}
+
 
 SphereObject::SphereObject(const glm::vec3& pos, const RGB& color, const float r)
     : GameObject{pos,color}, radius{r}
