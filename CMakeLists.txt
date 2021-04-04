@@ -3,6 +3,7 @@ cmake_minimum_required(VERSION 3.10)
 # set the project name
 project(BlackHole)
 set(CMAKE_CXX_FLAGS "-O3")
+set (CMAKE_CXX_STANDARD 11)
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -64,6 +65,13 @@ if(${ZIP} AND WIN32)
         ARGS -r ${CMAKE_SOURCE_DIR}/builds/Win64/BlackHole.zip 
 		BlackHole.exe libgcc_s_seh-1.dll libstdc++-6.dll
 		libwinpthread-1.dll zlib1.dll assets)
+elseif(${ZIP} AND OSX)
+    message("Zipping for macOS")
+    add_custom_command(TARGET BlackHole
+		POST_BUILD
+		COMMAND zip
+		ARGS -r ${CMAKE_SOURCE_DIR}/builds/MacOS/BlackHole.zip
+		BlackHole assets)
 elseif(${ZIP})
     message("Zipping for linux")
     add_custom_command(TARGET BlackHole 
