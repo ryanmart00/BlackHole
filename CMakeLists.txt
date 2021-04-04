@@ -65,7 +65,7 @@ if(${ZIP} AND WIN32)
         ARGS -r ${CMAKE_SOURCE_DIR}/builds/Win64/BlackHole.zip 
 		BlackHole.exe libgcc_s_seh-1.dll libstdc++-6.dll
 		libwinpthread-1.dll zlib1.dll assets)
-elseif(${ZIP} AND OSX)
+elseif(${ZIP} AND APPLE)
     message("Zipping for macOS")
     add_custom_command(TARGET BlackHole
 		POST_BUILD
