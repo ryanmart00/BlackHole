@@ -9,9 +9,16 @@ file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 #include header files
 include_directories(include) 
 if(WIN32)
+    message("WIN32")
     file(GLOB WINDOWSDLL "libs/WindowsDll/*")
     file(COPY ${WINDOWSDLL} DESTINATION ${CMAKE_BINARY_DIR})
+    set(CMAKE_CXX_FLAGS "-D_GNU_SOURCE -Wa,-mbig-obj -O1")
+    set(CMAKE_C_FLAGS "-D_GNU_SOURCE -Wa,-mbig-obj -O1")
+    set(ENABLE_PRECOMPILED_HEADERS OFF)
+    add_definitions(-DGCC_WINDRES)
+    set(WIN_LINKS "gdi32")
 endif(WIN32)
+
 
 #include glm (header only library)
 #---------------------------------
@@ -42,7 +49,8 @@ if(${DEBUG})
 endif(${DEBUG})
 
 target_link_libraries(BlackHole 
-    glfw ${GLFW_LIBRARIES})
+    glfw ${GLFW_LIBRARIES}
+    ${WIN_LINKS})
 #-lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath\
 #-lglfw3 -lglad -lassimp -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
 
