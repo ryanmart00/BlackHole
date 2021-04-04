@@ -7,8 +7,7 @@ set(CMAKE_CXX_FLAGS "-O3")
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
 #include header files
-include_directories(include)
-
+include_directories(include) 
 if(WIN32)
     file(GLOB WINDOWSDLL "libs/WindowsDll/*")
     file(COPY ${WINDOWSDLL} DESTINATION ${CMAKE_BINARY_DIR})
@@ -62,7 +61,7 @@ elseif(${ZIP})
     add_custom_command(TARGET BlackHole 
 		POST_BUILD
 		COMMAND zip 
-		ARGS -r ${CMAKE_SOURCE_DIR}/builds/Linux/Hellscape.zip 
+		ARGS -r ${CMAKE_SOURCE_DIR}/builds/Linux/BlackHole.zip 
 		BlackHole assets)
 endif()
 

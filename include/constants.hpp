@@ -107,13 +107,13 @@ const float GM_over_c = 1.0f;
 const float MAX_STEP_SIZE = 0.1f;
 const float MIN_STEP_SIZE = 0.001f;
 const float MAX_DISTANCE = 50.0f;
-const float DOT_THRESHOLD = 0.0f;
 const int NUM_CUTS = 1;
 
 const float FOV = glm::radians(45.0f);
 
 const double PLAYER_MOUSE_SENSITIVITY = 0.005; 
 const float PLAYER_SPEED = 2;
+const float UP_CLAMP = 0.95f;
 
 const float ORBIT_RATE = glm::radians(45.0f);
 

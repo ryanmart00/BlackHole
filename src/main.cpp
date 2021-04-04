@@ -245,9 +245,14 @@ void cursor_position_callback(GLFWwindow*, double xpos, double ypos)
     dy *= PLAYER_MOUSE_SENSITIVITY;
 
     glm::vec3 right = cam.getRight();
-    cam.orientation_ = 
-        glm::normalize(glm::angleAxis((float)dx, UP) 
-                * glm::angleAxis((float)dy, right)* cam.orientation_);
+    glm::quat t = glm::identity<glm::quat>();
+    if(glm::abs(glm::dot(glm::angleAxis((float)dy, right)
+                    * cam.getForward(), UP)) < UP_CLAMP)
+    {
+        t = glm::angleAxis((float)dy, right) * t;
+    }
+    t = glm::angleAxis((float)dx, UP) * t;
+    cam.orientation_ = t * cam.orientation_;
 
 }
 
