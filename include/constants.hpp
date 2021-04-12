@@ -7,7 +7,6 @@
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
-#include "rgb.hpp"
 
 
 
@@ -92,22 +91,18 @@ static glm::mat4 fromOrthoNormalBasis(glm::vec3 x, glm::vec3 y, glm::vec3 z, glm
 
 }
 
-const RGB BLACKHOLE_COLOR{255, 255, 255};
-const RGB BACKGROUND_COLOR{0, 0, 0};
+const glm::vec4 BLACKHOLE_COLOR{1, 1, 1, 1};
+const glm::vec4 BACKGROUND_COLOR{0, 0, 0, 1.0f};
 
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 800;
 
-const int WIDTH_SAMPLES = 200;
-const int HEIGHT_SAMPLES = 200;
-
 const int MAX_ITERATIONS = 500;
 const float GM_over_c = 1.0f;
 
-const float MAX_STEP_SIZE = 0.1f;
-const float MIN_STEP_SIZE = 0.001f;
+const float MAX_STEP_SIZE = 0.01f;
+const float THRESHOLD = 0.0001f;
 const float MAX_DISTANCE = 50.0f;
-const int NUM_CUTS = 1;
 
 const float FOV = glm::radians(45.0f);
 
@@ -117,27 +112,6 @@ const float UP_CLAMP = 0.95f;
 
 const float ORBIT_RATE = glm::radians(45.0f);
 
-struct Vector
-{
-
-    float u;
-    float Du;
-
-    Vector(float a, float b) : u{a}, Du{b}
-    {
-
-    }
-
-    Vector operator+(const Vector& o) const
-    {
-        return Vector{u + o.u, Du + o.Du};
-    }
-
-    Vector operator*(const float& o) const
-    {
-        return Vector{u*o, Du*o};
-    }
-};
 
 const glm::vec3 VERTEX_NORMS[] =
 {
