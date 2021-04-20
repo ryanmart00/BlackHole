@@ -7,6 +7,7 @@
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
+#include <limits>
 
 
 
@@ -97,12 +98,13 @@ const glm::vec4 BACKGROUND_COLOR{0, 0, 0, 1.0f};
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 800;
 
-const int MAX_ITERATIONS = 500;
-const float GM_over_c = 1.0f;
+const int MAX_ITERATIONS = 1000;
+const float GM_over_c = 0.0f;
 
-const float MAX_STEP_SIZE = 0.01f;
-const float THRESHOLD = 0.0001f;
-const float MAX_DISTANCE = 50.0f;
+const float MAX_STEP_SIZE = 0.003f;
+const float THRESHOLD = 0.00001f;
+const float MAX_DISTANCE = 30.0f;
+const float EPSILON = 0.00001f;
 
 const float FOV = glm::radians(45.0f);
 

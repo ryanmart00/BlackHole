@@ -3,6 +3,7 @@
 #include "glm/ext/quaternion_trigonometric.hpp"
 #include "glm/ext/scalar_constants.hpp" 
 #include "glm/geometric.hpp" 
+#include "glm/gtc/constants.hpp"
 #include "glm/gtc/quaternion.hpp"
 #include "glm/gtx/norm.hpp"
 #include "glm/matrix.hpp"
@@ -18,12 +19,13 @@
 #include "shader.hpp"
 #include "camera.hpp"
 #include "constants.hpp"
+#include "object.hpp"
 
 void cursor_position_callback(GLFWwindow*, double, double);
 GLuint colorTexture();
 void pollInput(GLFWwindow*, Camera&, float);
 
-Camera cam{glm::vec3{5,0,0}, glm::vec3{-1,0,1}, glm::vec3{0,1,0}};
+Camera cam{glm::vec3{5,0,0}, glm::vec3{-1,0,0}, glm::vec3{0,1,0}};
 
 unsigned int marchVAO = 0;
 unsigned int marchVBO;
@@ -112,11 +114,8 @@ int main()
 	//Generation of the Shader Program
 	//--------------------------------
     //
-	
-	Shader shader("assets/gl/quad.vs", "assets/gl/quad.fs");
-    shader.setInt("image", 0);
 
-    Shader march{"assets/gl/march.vs", "assets/gl/march.fs"};
+    Shader march{"assets/march.vs", "assets/march.fs"};
     march.use();
     march.setFloat("M", GM_over_c);
     march.setVec4("BlackHoleColor", glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
@@ -124,17 +123,30 @@ int main()
     march.setFloat("MaxDist", MAX_DISTANCE);
     march.setFloat("Threshold", THRESHOLD);
     march.setFloat("MaxStep", MAX_STEP_SIZE);
+    march.setFloat("EPSILON", EPSILON);
+    march.setInt("MAX_ITER", MAX_ITERATIONS);
 
-    march.setVec4("Spheres[0].color", glm::vec4{1.0f, 0.0f, 0.0f, 1.0f});
-    march.setVec3("Spheres[0].position", glm::vec3{0,0,3});
-    march.setFloat("Spheres[0].radius", 0.5f);
+    // Set point lights
+    march.setVec3("Lights[0].position", glm::vec3{6.0f, 0.0f, 6.0f});
+    march.setVec3("Lights[0].ambient", glm::vec3{0.5f, 0.5f, 0.5f});
+    march.setVec3("Lights[0].diffuse", glm::vec3{1.0f, 1.0f, 1.0f});
+    march.setVec3("Lights[0].specular", glm::vec3{1.0f, 1.0f, 1.0f});
 
-    march.setVec4("Spheres[1].color", glm::vec4{0.0f, 1.0f, 0.0f, 1.0f});
-    march.setFloat("Spheres[1].radius", 0.5f);
+    Object stat(march, glm::vec3{0.3, 0.0, 0.0}, glm::vec3{1.0, 0.0, 0.0},
+            glm::vec3{0.7, 0.6, 0.6}, 32);
+    stat.setPosition(march, glm::vec3{3.0,0.0,0.0});
+    stat.setOrientation(march, glm::mat3{1.0f});
+    stat.setDimensions(march, glm::vec3{0.5f, 0.0f, 0.0f});
 
-    march.setVec4("Spheres[2].color", glm::vec4{0.0f, 0.0f, 1.0f, 1.0f});
-    march.setFloat("Spheres[2].radius", 0.5f);
+    Object pole(march, glm::vec3{0.0, 0.3, 0.0}, glm::vec3{0.0, 1.0, 0.0},
+            glm::vec3{0.6, 0.7, 0.6}, 32);
+    pole.setDimensions(march, glm::vec3{0.5f, 0.1f, 0.5f});
+    pole.setOrientation(march, glm::mat3{1.0f});
 
+    Object orbit(march, glm::vec3{0.0, 0.0, 0.3}, glm::vec3{0.0, 0.0, 1.0},
+            glm::vec3{0.6, 0.6, 0.7}, 32);
+    orbit.setDimensions(march, glm::vec3{0.5f, 0.5f, 0.5f});
+    orbit.setOrientation(march, glm::mat3{1.0f});
 
     float dt = 0;
     float lastFrame = glfwGetTime();
@@ -149,11 +161,17 @@ int main()
         // Update objects
 
         march.use();
-        march.setVec3("Spheres[1].position", 
-                glm::vec3{0, 4.0f*cos(ORBIT_RATE * glfwGetTime()), 0});
-        march.setVec3("Spheres[2].position", 
-                glm::vec3{4.0f*cos(ORBIT_RATE * glfwGetTime()), 0, 
+        march.setFloat("M", 0.01f*glfwGetTime());
+        pole.setPosition(march, glm::vec3{0, 0, 0});
+                
+        pole.setOrientation(march, 
+                glm::mat3(glm::angleAxis((float)(ORBIT_RATE * glfwGetTime()), 
+                glm::vec3{0.0f, 0.0f, 1.0f})));
+        orbit.setPosition(march, glm::vec3{4.0f*cos(ORBIT_RATE * glfwGetTime()), 0, 
                 4.0f*sin(ORBIT_RATE * glfwGetTime())});
+        orbit.setOrientation(march, 
+                glm::mat3(glm::angleAxis((float)(ORBIT_RATE * glfwGetTime()), 
+                glm::vec3{1.0f, 0.0f, 0.0f})));
         march.setVec3("Cam", cam.position_);
         march.setMat3("View", glm::mat3{cam.orientation_});
         
