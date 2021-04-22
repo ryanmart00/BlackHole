@@ -92,8 +92,8 @@ static glm::mat4 fromOrthoNormalBasis(glm::vec3 x, glm::vec3 y, glm::vec3 z, glm
 
 }
 
-const glm::vec4 BLACKHOLE_COLOR{1, 1, 1, 1};
-const glm::vec4 BACKGROUND_COLOR{0, 0, 0, 1.0f};
+const glm::vec4 BLACKHOLE_COLOR{0, 0, 0, 1};
+const glm::vec4 BACKGROUND_COLOR{0.0f, 0.0f, 0.0f, 1.0f};
 
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 800;

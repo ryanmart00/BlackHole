@@ -1,3 +1,4 @@
+#include "glm/exponential.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/quaternion_geometric.hpp"
 #include "glm/ext/quaternion_trigonometric.hpp"
@@ -118,8 +119,8 @@ int main()
     Shader march{"assets/march.vs", "assets/march.fs"};
     march.use();
     march.setFloat("M", GM_over_c);
-    march.setVec4("BlackHoleColor", glm::vec4{1.0f, 1.0f, 1.0f, 1.0f});
-    march.setVec4("BackgroundColor", glm::vec4{0.0f, 0.0f, 0.0f, 1.0f});
+    march.setVec4("BlackHoleColor", BLACKHOLE_COLOR);
+    march.setVec4("BackgroundColor", BACKGROUND_COLOR);
     march.setFloat("MaxDist", MAX_DISTANCE);
     march.setFloat("Threshold", THRESHOLD);
     march.setFloat("MaxStep", MAX_STEP_SIZE);
@@ -132,20 +133,27 @@ int main()
     march.setVec3("Lights[0].diffuse", glm::vec3{1.0f, 1.0f, 1.0f});
     march.setVec3("Lights[0].specular", glm::vec3{1.0f, 1.0f, 1.0f});
 
+    march.setMat3("rot", glm::mat3(glm::angleAxis(5*glm::pi<float>()/8, glm::vec3{0,0,1})));
+
+    march.setVec3("Lights[1].position", glm::vec3{-6.0f, 0.0f, -6.0f});
+    march.setVec3("Lights[1].ambient", glm::vec3{0.5f, 0.5f, 0.5f});
+    march.setVec3("Lights[1].diffuse", glm::vec3{1.0f, 1.0f, 1.0f});
+    march.setVec3("Lights[1].specular", glm::vec3{1.0f, 1.0f, 1.0f});
+
     Object stat(march, glm::vec3{0.3, 0.0, 0.0}, glm::vec3{1.0, 0.0, 0.0},
             glm::vec3{0.7, 0.6, 0.6}, 32);
-    stat.setPosition(march, glm::vec3{3.0,0.0,0.0});
+    stat.setPosition(march, glm::vec3{1.0,0.0,-1.0});
     stat.setOrientation(march, glm::mat3{1.0f});
     stat.setDimensions(march, glm::vec3{0.5f, 0.0f, 0.0f});
 
     Object pole(march, glm::vec3{0.0, 0.3, 0.0}, glm::vec3{0.0, 1.0, 0.0},
             glm::vec3{0.6, 0.7, 0.6}, 32);
-    pole.setDimensions(march, glm::vec3{0.5f, 0.1f, 0.5f});
+    pole.setDimensions(march, glm::vec3{1, 0.2f, 0.5f});
     pole.setOrientation(march, glm::mat3{1.0f});
 
     Object orbit(march, glm::vec3{0.0, 0.0, 0.3}, glm::vec3{0.0, 0.0, 1.0},
             glm::vec3{0.6, 0.6, 0.7}, 32);
-    orbit.setDimensions(march, glm::vec3{0.5f, 0.5f, 0.5f});
+    orbit.setDimensions(march, glm::vec3{0.5f, 1, 0.5f});
     orbit.setOrientation(march, glm::mat3{1.0f});
 
     float dt = 0;
@@ -161,7 +169,7 @@ int main()
         // Update objects
 
         march.use();
-        march.setFloat("M", 0.01f*glfwGetTime());
+        march.setFloat("M", 0.25f * (1-cos(0.1 * glfwGetTime())) );
         pole.setPosition(march, glm::vec3{0, 0, 0});
                 
         pole.setOrientation(march, 

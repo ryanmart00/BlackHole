@@ -12,7 +12,7 @@ struct Light
     vec3 specular;
 };
 
-#define NUM_LIGHTS 1
+#define NUM_LIGHTS 2
 
 uniform Light Lights[NUM_LIGHTS];
 
@@ -46,6 +46,8 @@ uniform float MaxStep;
 uniform float EPSILON;
 uniform int MAX_ITER;
 
+uniform mat3 rot;
+
 #define M_PI 3.1415926535897932384626433832795
 #define ONE_SIXTH 1.0/6.0
 #define ONE_THIRD 1.0/3.0
@@ -55,6 +57,7 @@ float sphereSDF(vec3 pos, float r);
 float prismSDF(vec3 p, vec3 d);
 float cylinderSDF(vec3 p, vec2 d);
 float torusSDF(vec3 p, vec2 d);
+float coneSDF(vec3 p, vec2 d);
 float blackholeSDF(vec3 pos);
 
 float globalSDF(vec3 pos);
@@ -68,14 +71,24 @@ float obj0SDF(vec3 pos)
 {
     vec3 v = objects[0].orient * (pos - objects[0].position);
     float stat = sphereSDF(v, objects[0].dimensions.x);
-    return differenceSDF(stat, torusSDF(v, vec2(objects[0].dimensions.x, 
-        0.1*objects[0].dimensions)));
+    stat = differenceSDF(stat, torusSDF(v, vec2(objects[0].dimensions.x, 
+        0.01*objects[0].dimensions.x)));
+    vec3 w = transpose(rot) * objects[0].orient * (pos - objects[0].position + 
+        objects[0].dimensions.x * rot * vec3(0,1,0));
+    stat = differenceSDF(stat, coneSDF(w, objects[0].dimensions.x * vec2(0.5, 0.2)));
+    return stat;
 }
 
 float obj1SDF(vec3 pos)
 {
     vec3 v = objects[1].orient * (pos - objects[1].position);
     return torusSDF(v, objects[1].dimensions.xy);
+}
+
+float obj2SDF(vec3 pos)
+{
+    vec3 v = objects[2].orient * (pos - objects[2].position);
+    return coneSDF(v, objects[2].dimensions.xy);
 }
 
 vec4 phong(Material obj, vec3 pos, vec3 viewDir, mat3 system);
@@ -159,8 +172,7 @@ vec4 globalColor(vec3 pos, vec3 viewDir, mat3 system)
     {
         return phong(objects[1].mat, pos, viewDir, system);
     }
-    if(cylinderSDF(objects[2].orient * (pos - objects[2].position), objects[2].dimensions.xy) 
-        <= 0)
+    if(obj2SDF(pos) < Threshold)
     {
         return phong(objects[2].mat, pos, viewDir, system);
     }
@@ -174,8 +186,7 @@ float globalSDF(vec3 pos)
 
     r = unionSDF(r, obj0SDF(pos));
     r = unionSDF(r, obj1SDF(pos));
-    r = unionSDF(r, cylinderSDF(objects[2].orient * (pos - objects[2].position), 
-        objects[2].dimensions.xy));
+    r = unionSDF(r, obj2SDF(pos));
 
     return r;
 }
@@ -221,6 +232,16 @@ float cylinderSDF(vec3 pos, vec2 dimensions)
 float torusSDF(vec3 p, vec2 d)
 {
     return length(vec2(length(p.xz) - d.x, p.y)) - d.y;
+}
+
+float coneSDF(vec3 p, vec2 d)
+{
+    vec2 v = vec2(length(p.xz), p.y);
+
+    float x = d.x*(d.x*v.x+d.y*d.y-d.y*v.y)/dot(d,d);
+    vec2 closestPoint = vec2(x, d.y - d.y/d.x*x);
+
+    return max(-p.y, length(v) - length(closestPoint));
 }
 
 
