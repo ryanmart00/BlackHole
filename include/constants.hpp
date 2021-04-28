@@ -93,7 +93,7 @@ static glm::mat4 fromOrthoNormalBasis(glm::vec3 x, glm::vec3 y, glm::vec3 z, glm
 }
 
 const glm::vec4 BLACKHOLE_COLOR{0, 0, 0, 1};
-const glm::vec4 BACKGROUND_COLOR{0.0f, 0.0f, 0.0f, 1.0f};
+const glm::vec4 BACKGROUND_COLOR{0.7f, 0.7f, 0.7f, 1.0f};
 
 const int SCR_WIDTH = 800;
 const int SCR_HEIGHT = 800;
@@ -101,7 +101,7 @@ const int SCR_HEIGHT = 800;
 const int MAX_ITERATIONS = 1000;
 const float GM_over_c = 0.0f;
 
-const float MAX_STEP_SIZE = 0.003f;
+const float MAX_STEP_SIZE = 0.005f;
 const float THRESHOLD = 0.00001f;
 const float MAX_DISTANCE = 30.0f;
 const float EPSILON = 0.00001f;

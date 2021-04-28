@@ -5,6 +5,8 @@ project(BlackHole)
 set(CMAKE_CXX_FLAGS "-O3")
 set (CMAKE_CXX_STANDARD 11)
 
+find_package(Freetype REQUIRED)
+
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
 #include header files
@@ -38,7 +40,6 @@ link_directories(${PROJECT_BINARY_DIR}/libs/glfw/src)
 #set SOURCES to all files in src ending in .cpp
 file(GLOB SOURCES "src/*.c*")
 
-
 # add the executable
 add_executable(BlackHole ${SOURCES})
 
@@ -51,7 +52,8 @@ endif(${DEBUG})
 
 target_link_libraries(BlackHole 
     glfw ${GLFW_LIBRARIES}
-    ${WIN_LINKS})
+    ${WIN_LINKS} ${FREETYPE_LIBRARIES})
+target_include_directories(BlackHole PRIVATE ${FREETYPE_INCLUDE_DIRS})
 #-lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath\
 #-lglfw3 -lglad -lassimp -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
 

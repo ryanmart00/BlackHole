@@ -59,6 +59,7 @@ public:
      */
     void setVec3(const std::string &name, const glm::vec3 &value) const;
 
+
     /**
      *
      */
