@@ -44,11 +44,11 @@ uniform float MaxDist;
 uniform float Threshold;
 uniform float MaxStep;
 uniform float EPSILON;
-uniform int MAX_ITER;
+uniform float LOOP;
 
 uniform mat3 rot;
 
-#define M_PI 3.1415926535897932384626433832795
+#define M_PI 2 * 3.1415926535897932384626433832795
 #define ONE_SIXTH 1.0/6.0
 #define ONE_THIRD 1.0/3.0
 
@@ -88,7 +88,10 @@ float obj1SDF(vec3 pos)
 float obj2SDF(vec3 pos)
 {
     vec3 v = objects[2].orient * (pos - objects[2].position);
-    return coneSDF(v, objects[2].dimensions.xy);
+    vec3 b = v - vec3(-0.0,0,0.2);
+    float cone = sphereSDF(b, 0.1);
+    cone = unionSDF(cone, sphereSDF(v, 0.1));
+    return cone;
 }
 
 vec4 phong(Material obj, vec3 pos, vec3 viewDir, mat3 system);
@@ -118,14 +121,14 @@ void main()
     float dist = 0;
     float range = 0;
 
-    for(int i = 0; i < MAX_ITER; i++)
+    while(true)
     {
         if (1 > data.y * MaxDist)
         {
             FragColor = BackgroundColor;
             return;
         }
-        if (4* M_PI < abs(data.x))
+        if (LOOP * M_PI < abs(data.x))
         {
             //Gone around twice
             FragColor = BackgroundColor;
@@ -153,8 +156,6 @@ void main()
         data = stepDE(data, min(range, MaxStep));
 
     }
-    // we took too long
-    FragColor = BackgroundColor;
 }
 
 vec4 globalColor(vec3 pos, vec3 viewDir, mat3 system)

@@ -1,4 +1,6 @@
+#include "glm/common.hpp"
 #include <ft2build.h>
+#include <string>
 #include FT_FREETYPE_H
 #include <freetype2/freetype/config/ftheader.h>
 #include "glm/exponential.hpp"
@@ -26,9 +28,41 @@
 #include "object.hpp"
 
 void cursor_position_callback(GLFWwindow*, double, double);
-void pollInput(GLFWwindow*, Camera&, float);
+void pollInput(GLFWwindow*, float);
+void mouse_button_callback(GLFWwindow* window, int button, int action, int );
+void window_size_callback(GLFWwindow* window, int width, int height);
 
 Camera cam{glm::vec3{5,0,0}, glm::vec3{-1,0,0}, glm::vec3{0,1,0}};
+int SCR_WIDTH = 800;
+int SCR_HEIGHT = 800;
+
+
+enum SimState
+{
+    TITLE,
+    RUNNING,
+    PAUSE
+} state = TITLE;
+
+const int NUM_FIELDS = 7;
+const int SLIDER_START = 3;
+
+enum Sliders
+{
+    MASS = 0,
+    STEP = 1,
+    LOOP = 2,
+    DIST = 3,
+};
+
+std::string fieldNames[NUM_FIELDS] = {"Exit Simulation", "Reset Simulation", 
+    "Resume Simulation", 
+    "Black Hole Mass (more mass => larger): ",
+    "Simulation Step  (smaller => more accurate): ",
+    "Max Ray Loops (larger => more accurate): ",
+    "Clipping Distance (larger => see further): "};
+float sliders[NUM_FIELDS - SLIDER_START] = {M, MAX_STEP_SIZE, LOOP_NUM,
+    MAX_DISTANCE};
 
 GLuint tex;
 GLuint textVAO = 0;
@@ -103,33 +137,35 @@ void renderText(FT_Face& face, Shader& shader, const char* text, float x, float 
                 
     }
 }
+glm::vec3 VERTEX_NORMS[4]; 
 
-unsigned int marchVAO = 0;
-unsigned int marchVBO;
+GLuint marchVAO = 0;
+GLuint marchVBO;
 void renderMarch()
 {
     if (marchVAO == 0)
     {
-        float marchVertices[] = {
-            // positions        // Directions
-            -1.0f,  1.0f, 0.0f, VERTEX_NORMS[0].x, VERTEX_NORMS[0].y, VERTEX_NORMS[0].z,
-            -1.0f, -1.0f, 0.0f, VERTEX_NORMS[1].x, VERTEX_NORMS[1].y, VERTEX_NORMS[1].z,
-             1.0f,  1.0f, 0.0f, VERTEX_NORMS[2].x, VERTEX_NORMS[2].y, VERTEX_NORMS[2].z,
-             1.0f, -1.0f, 0.0f, VERTEX_NORMS[3].x, VERTEX_NORMS[3].y, VERTEX_NORMS[3].z
-        };
         // setup plane VAO
         glGenVertexArrays(1, &marchVAO);
         glGenBuffers(1, &marchVBO);
         glBindVertexArray(marchVAO);
-        glBindBuffer(GL_ARRAY_BUFFER, marchVBO);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(marchVertices), &marchVertices, GL_STATIC_DRAW);
         glEnableVertexAttribArray(0);
+        glBindBuffer(GL_ARRAY_BUFFER, marchVBO);
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 
                 (void*)(3 * sizeof(float)));
     }
+    float marchVertices[] = {
+        // positions        // Directions
+        -1.0f,  1.0f, 0.0f, VERTEX_NORMS[0].x, VERTEX_NORMS[0].y, VERTEX_NORMS[0].z,
+        -1.0f, -1.0f, 0.0f, VERTEX_NORMS[1].x, VERTEX_NORMS[1].y, VERTEX_NORMS[1].z,
+         1.0f,  1.0f, 0.0f, VERTEX_NORMS[2].x, VERTEX_NORMS[2].y, VERTEX_NORMS[2].z,
+         1.0f, -1.0f, 0.0f, VERTEX_NORMS[3].x, VERTEX_NORMS[3].y, VERTEX_NORMS[3].z
+    };
     glBindVertexArray(marchVAO);
+    glBindBuffer(GL_ARRAY_BUFFER, marchVBO);
+    glBufferData(GL_ARRAY_BUFFER, sizeof(marchVertices), &marchVertices, GL_STATIC_DRAW);
     glDrawArrays(GL_TRIANGLE_STRIP, 0, 4);
     glBindVertexArray(0);
 }
@@ -145,7 +181,6 @@ GLFWwindow* initWindow()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 
 	glfwWindowHint(GLFW_OPENGL_FORWARD_COMPAT, GL_TRUE); 
-    glfwWindowHint(GLFW_RESIZABLE, GL_FALSE);
 
 
 	//Initialization of Window
@@ -168,9 +203,7 @@ GLFWwindow* initWindow()
 		std::exit(1);
 	}   
 
-	//glfwSetFramebufferSizeCallback(window, framebuffer_size_callback); 
-
-
+    window_size_callback(window, SCR_WIDTH, SCR_HEIGHT);
 
 	#ifdef DEBUG 
 	int numAttr;
@@ -180,30 +213,43 @@ GLFWwindow* initWindow()
     return window;
 }
 
-int main()
+void initFreeType(FT_Library* ft, FT_Face* face)
 {
-    FT_Library ft;
-
-    if(FT_Init_FreeType(&ft))
+    if(FT_Init_FreeType(ft))
     {
         std::cerr << "Couldn't init freetype!" << std::endl;
-        return 1;
+        std::exit(1);
     }
 
-    FT_Face face;
-
-    if(FT_New_Face(ft, "assets/FreeSans.ttf", 0, &face))
+    if(FT_New_Face(*ft, "assets/FreeSans.ttf", 0, face))
     {
         std::cerr << "Couldn't open font!" << std::endl;
-        return 1;
+        std::exit(1);
     }
 
-    FT_Set_Pixel_Sizes(face, 0, 48);
+    FT_Set_Pixel_Sizes(*face, 0, 48);
+
+}
+
+double mouseX = 0;
+double mouseY = 0;
+float localTime = 0;
+bool slider = false;
+int sliderField = 0;
+double delta = 0;
+
+int main()
+{
     //GLFW    
     GLFWwindow* window = initWindow();
     
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
+    glfwSetWindowSizeCallback(window, window_size_callback);
+
+    FT_Library ft;
+    FT_Face face;
+    initFreeType(&ft, &face);
 
 	//Generation of the Shader Program
 	//--------------------------------
@@ -212,14 +258,14 @@ int main()
 
     Shader march{"assets/march.vs", "assets/march.fs"};
     march.use();
-    march.setFloat("M", GM_over_c);
+    march.setFloat("M", glm::pow(FACTOR, sliders[MASS]));
     march.setVec4("BlackHoleColor", BLACKHOLE_COLOR);
     march.setVec4("BackgroundColor", BACKGROUND_COLOR);
-    march.setFloat("MaxDist", MAX_DISTANCE);
     march.setFloat("Threshold", THRESHOLD);
-    march.setFloat("MaxStep", MAX_STEP_SIZE);
     march.setFloat("EPSILON", EPSILON);
-    march.setInt("MAX_ITER", MAX_ITERATIONS);
+    march.setFloat("MaxStep", glm::pow(FACTOR, sliders[STEP]));
+    march.setFloat("LOOP", glm::pow(FACTOR, sliders[LOOP]));
+    march.setFloat("MaxDist", glm::pow(FACTOR, sliders[DIST]));
 
     // Set point lights
     march.setVec3("Lights[0].position", glm::vec3{6.0f, 0.0f, 6.0f});
@@ -248,6 +294,7 @@ int main()
 
     Object orbit(march, glm::vec3{0.0, 0.0, 0.3}, glm::vec3{0.0, 0.0, 1.0},
             glm::vec3{0.6, 0.6, 0.7}, 32);
+    orbit.setPosition(march, glm::vec3{4,0,0});
     orbit.setDimensions(march, glm::vec3{0.5f, 1, 0.5f});
     orbit.setOrientation(march, glm::mat3{1.0f});
 
@@ -264,43 +311,115 @@ int main()
         float currentFrame = glfwGetTime();
         dt = currentFrame - lastFrame;
         lastFrame = currentFrame;
-        // Update objects
 
-        march.use();
-        march.setFloat("M", 0.25f * (1-cos(0.1 * glfwGetTime())) );
-        pole.setPosition(march, glm::vec3{0, 0, 0});
-                
-        pole.setOrientation(march, 
-                glm::mat3(glm::angleAxis((float)(ORBIT_RATE * glfwGetTime()), 
-                glm::vec3{0.0f, 0.0f, 1.0f})));
-        orbit.setPosition(march, glm::vec3{4.0f*cos(ORBIT_RATE * glfwGetTime()), 0, 
-                4.0f*sin(ORBIT_RATE * glfwGetTime())});
-        orbit.setOrientation(march, 
-                glm::mat3(glm::angleAxis((float)(ORBIT_RATE * glfwGetTime()), 
-                glm::vec3{1.0f, 0.0f, 0.0f})));
-        march.setVec3("Cam", cam.position_);
-        march.setMat3("View", glm::mat3{cam.orientation_});
-        
-		//Clear
-		glClearColor(1, 1, 1, 1);
-		glClear(GL_COLOR_BUFFER_BIT); 
+        //Clear
+        glClearColor(1, 1, 1, 1);
+        glClear(GL_COLOR_BUFFER_BIT); 
 
-		//Draw
-        march.use();
-        renderMarch();
+        if(state != PAUSE)
+        {
+            // Update objects
+            march.use();
+            march.setFloat("M", glm::pow(FACTOR, sliders[MASS]));
+            march.setFloat("MaxStep", glm::pow(FACTOR, sliders[STEP]));
+            march.setFloat("LOOP", glm::pow(FACTOR, sliders[LOOP]));
+            march.setFloat("MaxDist", glm::pow(FACTOR, sliders[DIST]));
+            pole.setPosition(march, glm::vec3{0, 0, 0});
+                    
+            pole.setOrientation(march, 
+                    glm::mat3(glm::angleAxis((float)(ORBIT_RATE * localTime), 
+                    glm::vec3{0.0f, 0.0f, 1.0f})));
+            orbit.setPosition(march, glm::vec3{4.0f*cos(ORBIT_RATE * localTime), 0, 
+                    4.0f*sin(ORBIT_RATE * localTime)});
+            orbit.setOrientation(march, 
+                   glm::mat3(glm::angleAxis((float)(ORBIT_RATE * localTime), 
+                   glm::vec3{1.0f, 0.0f, 0.0f})));
+            march.setVec3("Cam", cam.position_);
+            march.setMat3("View", glm::mat3{cam.orientation_});
+            
 
-        //Text
-        text.use();
-        text.setVec4("color", glm::vec4{1,1,1,.5f});
-        float sx = 2.0 / SCR_WIDTH;
-        float sy = 2.0 / SCR_HEIGHT;
+            //Draw
+            march.use();
+            renderMarch();
 
-        renderText(face, text, (std::string("FPS: ") + std::to_string((int)(1/dt))).c_str(),
-              -1 + 8 * sx,   1 - 50 * sy,    sx, sy);
+            //Show FPS
+            text.use();
+            text.setVec4("color", glm::vec4{1,1,1,.5f});
+            float sx = 2.0 / SCR_WIDTH;
+            float sy = 2.0 / SCR_HEIGHT;
+
+            FT_Set_Pixel_Sizes(face, 0, 48);
+            renderText(face, text, (std::string("FPS: ") 
+                        + std::to_string((int)(1/dt))).c_str(), 
+                        -1 + 8 * sx, 1 - 50 * sy, sx, sy);
+        }
+
+        float SX = 2.0 / SCR_WIDTH;
+        float SY = 2.0 / SCR_HEIGHT;
+        switch(state)
+        {
+        case TITLE:
+        {
+            FT_Set_Pixel_Sizes(face, 0, 48);
+            text.use();
+            text.setVec4("color", glm::vec4{.2,.2,.2,.75});
+
+            float sx = SX/2;
+            float sy = SY/2;
+            renderText(face, text, "Click to Start Simulation",
+                        - 245 * sx, 
+                        -0.5, sx, sy);
+            renderText(face, text, "Press Escape for Settings",
+                        - 247 * sx, 
+                        -0.75, sx, sy);
+        }
+            break;
+        case RUNNING:
+            localTime += dt;
+            break;
+        case PAUSE:
+        {
+            FT_Set_Pixel_Sizes(face, 0, 48);
+            text.use();
+            text.setVec4("color", glm::vec4{0,0,0,1});
+
+            renderText(face, text, "Settings", 
+                        -1 + 8 * SX, 1 - 50 * SY, SX, SY);
+            FT_Set_Pixel_Sizes(face, 0, FIELD_PIXEL-8);
+
+            for(int i = 0; i < SLIDER_START; i++)
+            {
+                text.setVec4("color", glm::vec4{((i+1)*FIELD_PIXEL < mouseY 
+                            && mouseY < (i+2)*FIELD_PIXEL),0,0,1});
+                renderText(face, text, fieldNames[i].c_str(), 
+                        -1 + 8 * SX,  -1 + (i+1)*FIELD_PIXEL * SY, SX, SY);
+            }
+            for(int i = 0; i < NUM_FIELDS - SLIDER_START; i++)
+            {
+                int j = i + SLIDER_START;
+                if (slider && sliderField == i)
+                {
+                    text.setVec4("color", glm::vec4(0,1,0,1));
+                    renderText(face, text, (fieldNames[j] + std::to_string(
+                                glm::pow(FACTOR, sliders[i] + delta))).c_str(), 
+                        -1 + 8 * SX,  -1 + (j+1)*FIELD_PIXEL * SY, SX, SY);
+                }
+                else
+                {
+                    text.setVec4("color", glm::vec4{((j+1)*FIELD_PIXEL < mouseY 
+                            && mouseY < (j+2)*FIELD_PIXEL),0,0,1});
+                    renderText(face, text, (fieldNames[j] + std::to_string(
+                                    glm::pow(FACTOR, sliders[i]))).c_str(), 
+                        -1 + 8 * SX,  -1 + (j+1)*FIELD_PIXEL * SY, SX, SY);
+                }
+            }
+        }
+            break;
+        }
 
 		glfwSwapBuffers(window);
 		glfwPollEvents();    
-        pollInput(window, cam, dt);
+        pollInput(window, dt);
     }
 
     glfwDestroyWindow(window);
@@ -310,84 +429,177 @@ int main()
     #endif
 }
 
-void mouse_button_callback(GLFWwindow* , int button, int action, int )
-{
-    if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
-    {
-    }
-    else if (button == GLFW_MOUSE_BUTTON_RIGHT && action == GLFW_PRESS)
-    {
-        // zoom out
-    }
-}
 
 bool firstMouse = true;
 double lastX = 0.0;
 double lastY = 0.0;
 void cursor_position_callback(GLFWwindow*, double xpos, double ypos)
 {
-    if(firstMouse)
+    mouseX = xpos;
+    mouseY = SCR_HEIGHT - ypos;
+    switch(state)
     {
+    case RUNNING:
+    {
+        if(firstMouse)
+        {
+            lastX = xpos;
+            lastY = ypos;
+            firstMouse = false;
+        }
+        double dx = -xpos + lastX;
+        double dy = lastY - ypos;
         lastX = xpos;
         lastY = ypos;
-        firstMouse = false;
+
+        dx *= PLAYER_MOUSE_SENSITIVITY;
+        dy *= PLAYER_MOUSE_SENSITIVITY;
+
+        glm::vec3 right = cam.getRight();
+        glm::quat t = glm::identity<glm::quat>();
+        if(glm::abs(glm::dot(glm::angleAxis((float)dy, right)
+                        * cam.getForward(), UP)) < UP_CLAMP)
+        {
+            t = glm::angleAxis((float)dy, right) * t;
+        }
+        t = glm::angleAxis((float)dx, UP) * t;
+        cam.orientation_ = glm::normalize(t * cam.orientation_);
     }
-    double dx = -xpos + lastX;
-    double dy = lastY - ypos;
-    lastX = xpos;
-    lastY = ypos;
-
-    dx *= PLAYER_MOUSE_SENSITIVITY;
-    dy *= PLAYER_MOUSE_SENSITIVITY;
-
-    glm::vec3 right = cam.getRight();
-    glm::quat t = glm::identity<glm::quat>();
-    if(glm::abs(glm::dot(glm::angleAxis((float)dy, right)
-                    * cam.getForward(), UP)) < UP_CLAMP)
-    {
-        t = glm::angleAxis((float)dy, right) * t;
+        break;
+    case PAUSE:
+        if(slider)
+        {
+           delta = xpos - lastX;
+        }
+    case TITLE:
+        break;
     }
-    t = glm::angleAxis((float)dx, UP) * t;
-    cam.orientation_ = glm::normalize(t * cam.orientation_);
-
 }
 
-void pollInput(GLFWwindow *window, Camera& cam, float dt)
+void mouse_button_callback(GLFWwindow* window, int button, int action, int )
 {
-	if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
-            glfwGetKey(window, GLFW_KEY_CAPS_LOCK))
-	{
-		glfwSetWindowShouldClose(window, true);
-	}
-	if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
-	{
-        cam.position_ += glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()) 
-            * dt * PLAYER_SPEED;
-    }
-	if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
-	{
-        cam.position_ -= glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()) 
-            * dt * PLAYER_SPEED;
-	}
-	if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
-	{
-        cam.position_ -= cam.getRight() * dt * PLAYER_SPEED;
-	}
-	if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
-	{
-        cam.position_ += cam.getRight() * dt * PLAYER_SPEED;
-	}
-    if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) 
+    switch(state)
     {
-        cam.position_ += glm::vec3(0.0f,1.0f,0.0f) * dt * PLAYER_SPEED;
+    case TITLE:
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS)
+        {
+            state = RUNNING;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+        }
+        break;
+    case RUNNING:
+        break;
+    case PAUSE:
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+        {
+            slider = false;
+            sliders[sliderField] += delta;
+        }
+        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_PRESS && mouseY >= FIELD_PIXEL)
+        {
+            int field = (mouseY - FIELD_PIXEL)/FIELD_PIXEL;
+            switch(field)
+            {
+            case 0: //exit
+                glfwSetWindowShouldClose(window, true);
+                break;
+            case 1: //restart
+                state = TITLE;
+                localTime = 0;
+                firstMouse = true;
+                cam = Camera{glm::vec3{5,0,0}, glm::vec3{-1,0,0}, glm::vec3{0,1,0}};
+                sliders[MASS] = M;
+                sliders[STEP] = MAX_STEP_SIZE;
+                sliders[LOOP] = LOOP_NUM;
+                sliders[DIST] = MAX_DISTANCE;
+                break;
+            case 2: //resume
+                state = RUNNING;
+                glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+                firstMouse = true;
+                break;
+            default: //sliders
+                slider = true;
+                sliderField = field - SLIDER_START;
+                lastX = mouseX;
+                delta = 0;
+            }
+        }
+        break;
 
     }
-    if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) 
+}
+
+void pollInput(GLFWwindow *window, float dt)
+{
+    if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
+            glfwGetKey(window, GLFW_KEY_CAPS_LOCK) == GLFW_PRESS)
     {
-        cam.position_ -= glm::vec3(0.0f,1.0f,0.0f) * dt * PLAYER_SPEED;
+        if(state == PAUSE)
+        {
+            state = RUNNING;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+            firstMouse = true;
+            
+        }
+        else
+        {
+            state = PAUSE;
+            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+        }
     }
-    if(glfwGetKey(window, GLFW_KEY_G) == GLFW_PRESS)
+    if(state == RUNNING)
     {
-            std::cout << 1/dt << std::endl;
+        float speed = glm::clamp(PLAYER_SPEED * glm::length(cam.position_) 
+                - 2*glm::pow(FACTOR, sliders[MASS]), MIN_PLAYER_SPEED, MAX_PLAYER_SPEED);
+        if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
+        {
+            cam.position_ += glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()) 
+                * dt * speed; 
+        }
+        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        {
+            cam.position_ -= glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()) 
+                * dt * speed;
+        }
+        if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
+        {
+            cam.position_ -= cam.getRight() * dt * speed;
+        }
+        if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        {
+            cam.position_ += cam.getRight() * dt * speed;
+        }
+        if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) 
+        {
+            cam.position_ += glm::vec3(0.0f,1.0f,0.0f) * dt * speed;
+
+        }
+        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) 
+        {
+            cam.position_ -= glm::vec3(0.0f,1.0f,0.0f) * dt * speed;
+        }
     }
+}
+
+void window_size_callback(GLFWwindow* , int width, int height)
+{
+    glViewport(0,0,width, height);
+    SCR_WIDTH = width;
+    SCR_HEIGHT = height;
+    float upAngle = atan((float)height/FOV);
+    float rightAngle = atan(width/sqrt(height*height + FOV2));
+    VERTEX_NORMS[0] =  glm::angleAxis(rightAngle,
+                glm::angleAxis(upAngle,RIGHT)*UP)
+            * glm::angleAxis(upAngle, RIGHT) * FORWARD;
+    VERTEX_NORMS[1] = glm::angleAxis(rightAngle,
+                glm::angleAxis(-upAngle,RIGHT)*UP)
+            * glm::angleAxis(-upAngle, RIGHT) * FORWARD;
+    VERTEX_NORMS[2] = glm::angleAxis((float)-rightAngle,
+                glm::angleAxis(upAngle,RIGHT)*UP)
+            * glm::angleAxis(upAngle, RIGHT) * FORWARD;
+    VERTEX_NORMS[3] = glm::angleAxis((float)-rightAngle,
+                glm::angleAxis(-upAngle,RIGHT)*UP)
+            * glm::angleAxis(-upAngle, RIGHT) * FORWARD;
+
 }

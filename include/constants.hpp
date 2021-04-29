@@ -5,6 +5,7 @@
 #include <string>
 #include <iostream>
 #include "glm/ext/quaternion_trigonometric.hpp"
+#include "glm/ext/scalar_constants.hpp"
 #include "glm/ext/vector_float3.hpp"
 #include "glm/trigonometric.hpp"
 #include <limits>
@@ -95,41 +96,28 @@ static glm::mat4 fromOrthoNormalBasis(glm::vec3 x, glm::vec3 y, glm::vec3 z, glm
 const glm::vec4 BLACKHOLE_COLOR{0, 0, 0, 1};
 const glm::vec4 BACKGROUND_COLOR{0.7f, 0.7f, 0.7f, 1.0f};
 
-const int SCR_WIDTH = 800;
-const int SCR_HEIGHT = 800;
+const int FIELD_PIXEL = 32;
+const float FACTOR = 1.01;
+const float LOOP_NUM = log(4)/log(FACTOR);
 
-const int MAX_ITERATIONS = 1000;
-const float GM_over_c = 0.0f;
-
-const float MAX_STEP_SIZE = 0.005f;
+const float M = log(0.1)/log(FACTOR);
+const float MAX_STEP_SIZE = log(0.005f)/log(FACTOR);
 const float THRESHOLD = 0.00001f;
-const float MAX_DISTANCE = 30.0f;
+const float MAX_DISTANCE = log(30.0f)/log(FACTOR);
 const float EPSILON = 0.00001f;
 
-const float FOV = glm::radians(45.0f);
+const float FOV = 800/tan(glm::radians(45.0f)/2);
+const float FOV2 = FOV*FOV;
 
 const double PLAYER_MOUSE_SENSITIVITY = 0.005; 
-const float PLAYER_SPEED = 2;
+const float PLAYER_SPEED = 1;
+const float MAX_PLAYER_SPEED = 2;
+const float MIN_PLAYER_SPEED = 0.01;
 const float UP_CLAMP = 0.95f;
 
 const float ORBIT_RATE = glm::radians(45.0f);
 
 
-const glm::vec3 VERTEX_NORMS[] =
-{
-    glm::angleAxis((float)atan(((float)SCR_HEIGHT)/SCR_WIDTH*sin(FOV/2)),
-            glm::angleAxis(FOV/2,RIGHT)*UP)
-        * glm::angleAxis(FOV/2, RIGHT) * FORWARD,
-    glm::angleAxis((float)atan(((float)SCR_HEIGHT)/SCR_WIDTH*sin(FOV/2)),
-            glm::angleAxis(-FOV/2,RIGHT)*UP)
-        * glm::angleAxis(-FOV/2, RIGHT) * FORWARD,
-    glm::angleAxis((float)-atan(((float)SCR_HEIGHT)/SCR_WIDTH*sin(FOV/2)),
-            glm::angleAxis(FOV/2,RIGHT)*UP)
-        * glm::angleAxis(FOV/2, RIGHT) * FORWARD,
-    glm::angleAxis((float)-atan(((float)SCR_HEIGHT)/SCR_WIDTH*sin(FOV/2)),
-            glm::angleAxis(-FOV/2,RIGHT)*UP)
-        * glm::angleAxis(-FOV/2, RIGHT) * FORWARD
-};
 
 
 #endif
