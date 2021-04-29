@@ -44,8 +44,8 @@ enum SimState
     PAUSE
 } state = TITLE;
 
-const int NUM_FIELDS = 7;
-const int SLIDER_START = 3;
+const int NUM_FIELDS = 8;
+const int SLIDER_START = 4;
 
 enum Sliders
 {
@@ -55,10 +55,11 @@ enum Sliders
     DIST = 3,
 };
 
-std::string fieldNames[NUM_FIELDS] = {"Exit Simulation", "Reset Simulation", 
+std::string fieldNames[NUM_FIELDS] = {"Exit Simulation", "Restart Simulation", 
+	"Reset Constants", 
     "Resume Simulation", 
     "Black Hole Mass (more mass => larger): ",
-    "Simulation Step  (smaller => more accurate): ",
+    "Simulation Step  (smaller => more accurate/much slower): ",
     "Max Ray Loops (larger => more accurate): ",
     "Clipping Distance (larger => see further): "};
 float sliders[NUM_FIELDS - SLIDER_START] = {M, MAX_STEP_SIZE, LOOP_NUM,
@@ -490,7 +491,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int )
     case RUNNING:
         break;
     case PAUSE:
-        if (button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
+        if (slider && button == GLFW_MOUSE_BUTTON_LEFT && action == GLFW_RELEASE)
         {
             slider = false;
             sliders[sliderField] += delta;
@@ -508,12 +509,14 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int )
                 localTime = 0;
                 firstMouse = true;
                 cam = Camera{glm::vec3{5,0,0}, glm::vec3{-1,0,0}, glm::vec3{0,1,0}};
+	        break;
+	    case 2: // constants
                 sliders[MASS] = M;
                 sliders[STEP] = MAX_STEP_SIZE;
                 sliders[LOOP] = LOOP_NUM;
                 sliders[DIST] = MAX_DISTANCE;
                 break;
-            case 2: //resume
+            case 3: //resume
                 state = RUNNING;
                 glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
                 firstMouse = true;
@@ -523,6 +526,7 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int )
                 sliderField = field - SLIDER_START;
                 lastX = mouseX;
                 delta = 0;
+		break;
             }
         }
         break;
@@ -535,14 +539,7 @@ void pollInput(GLFWwindow *window, float dt)
     if(glfwGetKey(window, GLFW_KEY_ESCAPE) == GLFW_PRESS ||
             glfwGetKey(window, GLFW_KEY_CAPS_LOCK) == GLFW_PRESS)
     {
-        if(state == PAUSE)
-        {
-            state = RUNNING;
-            glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-            firstMouse = true;
-            
-        }
-        else
+        if(state != PAUSE)
         {
             state = PAUSE;
             glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
