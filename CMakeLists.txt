@@ -52,7 +52,8 @@ endif(${DEBUG})
 
 target_link_libraries(BlackHole 
     glfw ${GLFW_LIBRARIES}
-    ${WIN_LINKS} ${FREETYPE_LIBRARIES})
+    ${WIN_LINKS} ${FREETYPE_LIBRARIES}
+    bz2 png z) #in case freetype goofs
 target_include_directories(BlackHole PRIVATE ${FREETYPE_INCLUDE_DIRS})
 #-lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath\
 #-lglfw3 -lglad -lassimp -lGL -lX11 -lpthread -lXrandr -lXi -ldl 
