@@ -118,8 +118,8 @@ void main()
 
     vec3 localDir = transpose(system) * Direction;
     vec3 data = 1/length(Cam) * vec3(0, 1, -localDir.x / localDir.z);
-    float dist = 0;
     float range = 0;
+    float dist = 0;
 
     while(true)
     {
@@ -141,8 +141,8 @@ void main()
         if (dist < Threshold)
         {
             // compute color
-            vec3 viewDir = normalize(system * 1/data.y * vec3(-sin(data.x), 0, cos(data.x)) 
-                - 1/data.y/data.y * data.z * vec3(cos(data.x), 0, sin(data.x)));
+            vec3 viewDir = normalize(system * (1/data.y * vec3(-sin(data.x), 0, cos(data.x)) 
+                - 1/data.y/data.y * data.z * vec3(cos(data.x), 0, sin(data.x))));
             FragColor = globalColor(z, viewDir, transpose(system));
 
             return;
@@ -151,8 +151,8 @@ void main()
         // Note that ds = sqrt(r^2 + (dr/dtheta)^2) dtheta
         // and du/dtheta = d/dtheta (1/r) = -1/r^2 dr/dtheta
         // so that ds = sqrt(1 + (du/dtheta)^2) r dtheta
-        // or dtheta = u/sqrt(1 + (du)^2)
-        range = data.y/sqrt(data.z*data.z + 1);
+        // or dtheta = ds * u/sqrt(1 + (du)^2)
+        range = dist * data.y/sqrt(data.z*data.z + 1);
         data = stepDE(data, min(range, MaxStep));
 
     }
@@ -264,7 +264,7 @@ vec4 phong(Material obj, vec3 pos, vec3 viewDir, mat3 system)
         vec3 diffuse = Lights[i].diffuse * (diff * obj.diffuse);
 
         //specular
-        vec3 halfwayDir = normalize(lightDir + Cam - pos);
+        vec3 halfwayDir = normalize(lightDir + Cam - pos); //Cam - pos
         float spec = pow(max(dot(normal, halfwayDir), 0.0), obj.shininess);
         vec3 specular = Lights[i].specular * (spec * obj.specular);
 
@@ -287,6 +287,11 @@ vec3 grad(vec3 p)
 vec3 stepDE(vec3 data, float h)
 {
     vec2 y = data.yz;
+    return vec3(data.x + h, y + h*f(y));
+}
+/*
+{
+    vec2 y = data.yz;
     vec2 k1 = f(y);        
     float halfH = 0.5 * h;
     vec2 k2 = f(halfH * k1 + y);
@@ -294,7 +299,7 @@ vec3 stepDE(vec3 data, float h)
     vec2 k4 = f(h * k3 + y);
     y += h*ONE_SIXTH*(k1 + 2*k2 + 2*k3 + k4);
     return vec3(data.x + h, y);
-}
+}*/
 
 // Returns <du, d^2u>
 vec2 f(vec2 y)

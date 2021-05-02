@@ -1,5 +1,7 @@
 #include "glm/common.hpp"
+#include "glm/gtx/quaternion.hpp"
 #include <ft2build.h>
+#include <limits>
 #include <string>
 #include FT_FREETYPE_H
 #include <freetype2/freetype/config/ftheader.h>
@@ -31,6 +33,9 @@ void cursor_position_callback(GLFWwindow*, double, double);
 void pollInput(GLFWwindow*, float);
 void mouse_button_callback(GLFWwindow* window, int button, int action, int );
 void window_size_callback(GLFWwindow* window, int width, int height);
+void scroll_callback(GLFWwindow* window, double x, double y);
+glm::vec2 stepDE(glm::vec2 data, float h);
+glm::vec2 f(glm::vec2 y);
 
 Camera cam{glm::vec3{5,0,0}, glm::vec3{-1,0,0}, glm::vec3{0,1,0}};
 int SCR_WIDTH = 800;
@@ -44,26 +49,21 @@ enum SimState
     PAUSE
 } state = TITLE;
 
-const int NUM_FIELDS = 8;
+const int NUM_FIELDS = 6;
 const int SLIDER_START = 4;
 
 enum Sliders
 {
-    MASS = 0,
-    STEP = 1,
-    LOOP = 2,
-    DIST = 3,
+    STEP = 0,
+    MASS = 1,
 };
 
 std::string fieldNames[NUM_FIELDS] = {"Exit Simulation", "Restart Simulation", 
 	"Reset Constants", 
     "Resume Simulation", 
-    "Black Hole Mass (more mass => larger): ",
     "Simulation Step  (smaller => more accurate/much slower): ",
-    "Max Ray Loops (larger => more accurate): ",
-    "Clipping Distance (larger => see further): "};
-float sliders[NUM_FIELDS - SLIDER_START] = {M, MAX_STEP_SIZE, LOOP_NUM,
-    MAX_DISTANCE};
+    "Black Hole Mass (more mass => larger): "};
+float sliders[NUM_FIELDS - SLIDER_START] = {MAX_STEP_SIZE, M};
 
 GLuint tex;
 GLuint textVAO = 0;
@@ -247,6 +247,7 @@ int main()
     glfwSetMouseButtonCallback(window, mouse_button_callback);
     glfwSetCursorPosCallback(window, cursor_position_callback);
     glfwSetWindowSizeCallback(window, window_size_callback);
+    glfwSetScrollCallback(window, scroll_callback);
 
     FT_Library ft;
     FT_Face face;
@@ -265,8 +266,8 @@ int main()
     march.setFloat("Threshold", THRESHOLD);
     march.setFloat("EPSILON", EPSILON);
     march.setFloat("MaxStep", glm::pow(FACTOR, sliders[STEP]));
-    march.setFloat("LOOP", glm::pow(FACTOR, sliders[LOOP]));
-    march.setFloat("MaxDist", glm::pow(FACTOR, sliders[DIST]));
+    march.setFloat("LOOP", 4);
+    march.setFloat("MaxDist", 100);
 
     // Set point lights
     march.setVec3("Lights[0].position", glm::vec3{6.0f, 0.0f, 6.0f});
@@ -323,8 +324,6 @@ int main()
             march.use();
             march.setFloat("M", glm::pow(FACTOR, sliders[MASS]));
             march.setFloat("MaxStep", glm::pow(FACTOR, sliders[STEP]));
-            march.setFloat("LOOP", glm::pow(FACTOR, sliders[LOOP]));
-            march.setFloat("MaxDist", glm::pow(FACTOR, sliders[DIST]));
             pole.setPosition(march, glm::vec3{0, 0, 0});
                     
             pole.setOrientation(march, 
@@ -372,7 +371,13 @@ int main()
                         -0.5, sx, sy);
             renderText(face, text, "Press Escape for Settings",
                         - 247 * sx, 
-                        -0.75, sx, sy);
+                        -0.6, sx, sy);
+            renderText(face, text, "Scroll to Change Black Hole Mass",
+                        - 340* sx, 
+                        -0.7, sx, sy);
+            renderText(face, text, "WASD to move",
+                        - 150 * sx, 
+                        -0.8, sx, sy);
         }
             break;
         case RUNNING:
@@ -477,6 +482,12 @@ void cursor_position_callback(GLFWwindow*, double xpos, double ypos)
     }
 }
 
+void scroll_callback(GLFWwindow*, double , double y)
+{
+    sliders[MASS] -= y;
+
+}
+
 void mouse_button_callback(GLFWwindow* window, int button, int action, int )
 {
     switch(state)
@@ -513,8 +524,6 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int )
 	    case 2: // constants
                 sliders[MASS] = M;
                 sliders[STEP] = MAX_STEP_SIZE;
-                sliders[LOOP] = LOOP_NUM;
-                sliders[DIST] = MAX_DISTANCE;
                 break;
             case 3: //resume
                 state = RUNNING;
@@ -547,34 +556,84 @@ void pollInput(GLFWwindow *window, float dt)
     }
     if(state == RUNNING)
     {
-        float speed = glm::clamp(PLAYER_SPEED * glm::length(cam.position_) 
+        float dist = dt*glm::clamp(PLAYER_SPEED * glm::length(cam.position_) 
                 - 2*glm::pow(FACTOR, sliders[MASS]), MIN_PLAYER_SPEED, MAX_PLAYER_SPEED);
+        glm::vec3 dir = glm::vec3{0};
+        bool moved = false;
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
         {
-            cam.position_ += glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()) 
-                * dt * speed; 
+            moved = true;
+            dir += glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight())); 
+                
         }
-        if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
+        else if(glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS)
         {
-            cam.position_ -= glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()) 
-                * dt * speed;
+            moved = true;
+            dir += -glm::normalize(glm::cross(glm::vec3(0.0f, 1.0f, 0.0f), cam.getRight()));
         }
         if(glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS)
         {
-            cam.position_ -= cam.getRight() * dt * speed;
+            moved = true;
+            dir += -glm::normalize(cam.getRight());
         }
-        if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
+        else if(glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS)
         {
-            cam.position_ += cam.getRight() * dt * speed;
+            moved = true;
+            dir += glm::normalize(cam.getRight()); 
         }
         if(glfwGetKey(window,GLFW_KEY_SPACE) == GLFW_PRESS) 
         {
-            cam.position_ += glm::vec3(0.0f,1.0f,0.0f) * dt * speed;
+            moved = true;
+            dir += glm::normalize(glm::vec3(0.0f,1.0f,0.0f));
 
         }
-        if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) 
+        else if(glfwGetKey(window, GLFW_KEY_LEFT_SHIFT) == GLFW_PRESS) 
         {
-            cam.position_ -= glm::vec3(0.0f,1.0f,0.0f) * dt * speed;
+            moved = true;
+            dir += -glm::normalize(glm::vec3(0.0f,1.0f,0.0f)); 
+        }
+        if(moved)
+        {
+            dir = glm::normalize(dir);
+            glm::vec3 x = glm::normalize(cam.position_);
+            glm::vec3 z = dir;
+            if(abs(glm::dot(x,z)) > .95)
+            {
+                cam.position_ += dir * dist;
+            }
+            else
+            {
+                z = z - dot(x,z)/dot(x,x) * x;
+                x = glm::normalize(x);
+                z = glm::normalize(z);
+                glm::vec3 y = glm::cross(z, x); //My own special twist
+                y = normalize(y);
+                // this is the transpose of the orthonormal basis constructed above 
+                // and is thus the inverse transformation
+                glm::mat3 system = glm::mat3(x,y,z);
+
+                glm::vec3 localDir = glm::transpose(system) * dir;
+                glm::vec2 data = 1/glm::length(cam.position_) 
+                    * glm::vec2(1, -localDir.x / localDir.z);
+                float h = dist * data.x/sqrt(data.y*data.y + 1);
+                data = stepDE(data, h);
+                glm::vec3 newDir = normalize(system *
+                        glm::vec3{-data.y/data.x/data.x * cos(h) - 1/data.x * sin(h),
+                        0,
+                        -data.y/data.x/data.x * sin(h) + 1/data.x * cos(h)});
+                if(!isnan(glm::dot(dir, newDir)))
+                {
+                    cam.position_ = 1/data.x * system * glm::vec3(cos(h), 0, sin(h));
+                    cam.rotate(-glm::acos(glm::clamp(glm::dot(dir, newDir),-1.0f,1.0f)), y); 
+                    cam.orientation_ = glm::normalize(cam.orientation_);
+                }
+                else
+                {
+                    cam.position_ += dir * dist;
+                }
+                
+            }
+            
         }
     }
 }
@@ -599,4 +658,15 @@ void window_size_callback(GLFWwindow* , int width, int height)
                 glm::angleAxis(-upAngle,RIGHT)*UP)
             * glm::angleAxis(-upAngle, RIGHT) * FORWARD;
 
+}
+
+glm::vec2 stepDE(glm::vec2 data, float h)
+{
+    return data + h* f(data);
+}
+
+// Returns <du, d^2u>
+glm::vec2 f(glm::vec2 y)
+{
+    return glm::vec2(y.y, 3 * glm::pow(FACTOR, sliders[MASS]) * y.x * y.x - y.x);
 }

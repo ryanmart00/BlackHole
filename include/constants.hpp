@@ -101,7 +101,7 @@ const float FACTOR = 1.01;
 const float LOOP_NUM = log(4)/log(FACTOR);
 
 const float M = log(0.1)/log(FACTOR);
-const float MAX_STEP_SIZE = log(0.005f)/log(FACTOR);
+const float MAX_STEP_SIZE = log(0.010f)/log(FACTOR);
 const float THRESHOLD = 0.00001f;
 const float MAX_DISTANCE = log(30.0f)/log(FACTOR);
 const float EPSILON = 0.00001f;
@@ -112,7 +112,7 @@ const float FOV2 = FOV*FOV;
 const double PLAYER_MOUSE_SENSITIVITY = 0.005; 
 const float PLAYER_SPEED = 1;
 const float MAX_PLAYER_SPEED = 2;
-const float MIN_PLAYER_SPEED = 0.01;
+const float MIN_PLAYER_SPEED = 0.1;
 const float UP_CLAMP = 0.95f;
 
 const float ORBIT_RATE = glm::radians(45.0f);
