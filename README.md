@@ -29,10 +29,16 @@ libx11-dev libxrandr-dev libxinerama-dev libxcursor-dev libxi-dev
 ```
 ### MacOS
 First we'll want to install cmake
-```brew install cmake```
+```
+brew install cmake
+```
 This should also install make and clang++ but if not you may install clang++ from llvm:
-```brew install llvm```
+```
+brew install llvm
+```
 To point your computer to llvm run 
-```echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile ; source ~/.bash_profile```
+```
+echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile ; source ~/.bash_profile
+```
 
 
