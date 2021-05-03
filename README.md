@@ -7,5 +7,27 @@
 
 <a id="raw-url" href="https://raw.githubusercontent.com/ryanmart00/BlackHole/master/builds/MacOS/BlackHole.zip"> Mac OSX 64-bit</a>
 
-Or: build using cmake. Note that this project requires c++11 or later. Further, use --recurse-submodules when cloning this repository to download the required libraries.
+## Building from Source
+Clone this repository in the terminal using
+```git clone --recurse-submodules https://github.com/ryanmart00/BlackHole.git```
+Then 
+```cd BlackHole```
+and 
+```mkdir bin; cd bin```
+Next we'll want to build the repo using cmake. If you don't have cmake install it using a normal package manager,
+details per os are below.
+Finally ```cmake .. ; make```
+If everything went well you should have an executable called ```BlackHole```
+in the bin directory which you can execute as you see fit.
+
+## OS Specific Instructions
+### MacOS
+First we'll want to install cmake
+```brew install cmake```
+This should also install make and clang++ but if not you may install clang++ from llvm:
+```brew install llvm```
+To point your computer to llvm run 
+```echo 'export PATH="/usr/local/opt/llvm/bin:$PATH"' >> ~/.bash_profile ; source ~/.bash_profile```
+Finally, 
+
 
