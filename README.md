@@ -9,14 +9,23 @@
 
 ## Building from Source
 Clone this repository in the terminal using
-```git clone --recurse-submodules https://github.com/ryanmart00/BlackHole.git```
+```
+git clone --recurse-submodules https://github.com/ryanmart00/BlackHole.git
+```
 Then 
-```cd BlackHole```
+```
+cd BlackHole
+```
 and 
-```mkdir bin; cd bin```
+```
+mkdir bin; cd bin
+```
 Next we'll want to build the repo using cmake. If you don't have cmake install it using a normal package manager,
 details per os are below.
-Finally ```cmake .. ; make```
+Finally 
+```
+cmake .. ; make
+```
 If everything went well you should have an executable called ```BlackHole```
 in the bin directory which you can execute as you see fit.
 
