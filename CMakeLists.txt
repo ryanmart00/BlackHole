@@ -5,7 +5,6 @@ project(BlackHole)
 set(CMAKE_CXX_FLAGS "-O3")
 set (CMAKE_CXX_STANDARD 11)
 
-find_package(Freetype REQUIRED)
 
 file(COPY assets DESTINATION ${CMAKE_BINARY_DIR})
 
@@ -37,6 +36,12 @@ add_subdirectory(libs/glfw)
 include_directories(libs/glfw/include)
 link_directories(${PROJECT_BINARY_DIR}/libs/glfw/src)
 
+#include freetype
+#---------------------------------
+add_subdirectory(libs/freetype)
+include_directories(libs/freetype/include)
+link_directories(${PROJECT_BINARY_DIR}/libs/freetype/builds)
+
 #set SOURCES to all files in src ending in .cpp
 file(GLOB SOURCES "src/*.c*")
 
@@ -53,12 +58,12 @@ endif(${DEBUG})
 if(APPLE) 
     target_link_libraries(BlackHole 
     glfw ${GLFW_LIBRARIES}
-    ${WIN_LINKS} ${FREETYPE_LIBRARIES}
+    ${WIN_LINKS} freetype ${FREETYPE_LIBRARIES}
     bz2 png z) #in case freetype goofs
 else()
     target_link_libraries(BlackHole 
     glfw ${GLFW_LIBRARIES}
-    ${WIN_LINKS} ${FREETYPE_LIBRARIES}) #in case freetype goofs
+    ${WIN_LINKS} freetype ${FREETYPE_LIBRARIES}) #in case freetype goofs
 endif(APPLE)
 target_include_directories(BlackHole PRIVATE ${FREETYPE_INCLUDE_DIRS})
 #-lBulletSoftBody -lBulletDynamics -lBulletCollision -lLinearMath\

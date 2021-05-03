@@ -1,10 +1,10 @@
 #include "glm/common.hpp"
 #include "glm/gtx/quaternion.hpp"
-#include <ft2build.h>
 #include <limits>
 #include <string>
+#include <ft2build.h>
 #include FT_FREETYPE_H
-#include <freetype2/freetype/config/ftheader.h>
+#include <freetype/config/ftheader.h>
 #include "glm/exponential.hpp"
 #include "glm/ext/matrix_transform.hpp"
 #include "glm/ext/quaternion_geometric.hpp"
