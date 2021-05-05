@@ -101,7 +101,7 @@ const float FACTOR = 1.01;
 const float LOOP_NUM = log(4)/log(FACTOR);
 
 const float M = log(0.1)/log(FACTOR);
-const float MAX_STEP_SIZE = log(0.010f)/log(FACTOR);
+const float MAX_STEP_SIZE = log(0.015f)/log(FACTOR);
 const float THRESHOLD = 0.00001f;
 const float MAX_DISTANCE = log(30.0f)/log(FACTOR);
 const float EPSILON = 0.00001f;

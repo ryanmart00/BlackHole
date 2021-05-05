@@ -276,6 +276,8 @@ int main()
     march.setVec3("Lights[0].specular", glm::vec3{1.0f, 1.0f, 1.0f});
 
     march.setMat3("rot", glm::mat3(glm::angleAxis(5*glm::pi<float>()/8, glm::vec3{0,0,1})));
+    march.setMat3("A", glm::mat3(glm::angleAxis(glm::pi<float>()/6, glm::vec3{0,1,0})));
+    march.setMat3("K", glm::mat3(glm::angleAxis(-glm::pi<float>()/4, glm::vec3{0,1,0})));
 
     march.setVec3("Lights[1].position", glm::vec3{-6.0f, 0.0f, -6.0f});
     march.setVec3("Lights[1].ambient", glm::vec3{0.5f, 0.5f, 0.5f});
@@ -296,8 +298,8 @@ int main()
 
     Object orbit(march, glm::vec3{0.0, 0.0, 0.3}, glm::vec3{0.0, 0.0, 1.0},
             glm::vec3{0.6, 0.6, 0.7}, 32);
-    orbit.setPosition(march, glm::vec3{4,0,0});
-    orbit.setDimensions(march, glm::vec3{0.5f, 1, 0.5f});
+    orbit.setPosition(march, glm::vec3{2,0,0});
+    orbit.setDimensions(march, glm::vec3{.65f, 0.1, 0.3});
     orbit.setOrientation(march, glm::mat3{1.0f});
 
     glEnable(GL_BLEND);
@@ -329,11 +331,12 @@ int main()
             pole.setOrientation(march, 
                     glm::mat3(glm::angleAxis((float)(ORBIT_RATE * localTime), 
                     glm::vec3{0.0f, 0.0f, 1.0f})));
-            orbit.setPosition(march, glm::vec3{4.0f*cos(ORBIT_RATE * localTime), 0, 
-                    4.0f*sin(ORBIT_RATE * localTime)});
+            orbit.setPosition(march, 3.0f * cos(ORBIT_RATE * localTime / 3.14f)* 
+                    glm::vec3{cos(ORBIT_RATE * localTime), 0, 
+                    sin(ORBIT_RATE * localTime)});
             orbit.setOrientation(march, 
                    glm::mat3(glm::angleAxis((float)(ORBIT_RATE * localTime), 
-                   glm::vec3{1.0f, 0.0f, 0.0f})));
+                   glm::vec3{1.0f, 1.0f, 0.0f})));
             march.setVec3("Cam", cam.position_);
             march.setMat3("View", glm::mat3{cam.orientation_});
             
@@ -427,6 +430,7 @@ int main()
 		glfwPollEvents();    
         pollInput(window, dt);
     }
+
 
     glfwDestroyWindow(window);
 	glfwTerminate();

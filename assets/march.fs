@@ -1,7 +1,6 @@
 #version 330 core
 precision mediump float;
-out vec4 FragColor;
-
+out vec4 FragColor; 
 in vec3 Direction;
 
 struct Light
@@ -47,6 +46,8 @@ uniform float EPSILON;
 uniform float LOOP;
 
 uniform mat3 rot;
+uniform mat3 A;
+uniform mat3 K;
 
 #define M_PI 2 * 3.1415926535897932384626433832795
 #define ONE_SIXTH 1.0/6.0
@@ -55,6 +56,7 @@ uniform mat3 rot;
 
 float sphereSDF(vec3 pos, float r);
 float prismSDF(vec3 p, vec3 d);
+//radius, height
 float cylinderSDF(vec3 p, vec2 d);
 float torusSDF(vec3 p, vec2 d);
 float coneSDF(vec3 p, vec2 d);
@@ -87,11 +89,63 @@ float obj1SDF(vec3 pos)
 
 float obj2SDF(vec3 pos)
 {
+    vec3 dim = objects[2].dimensions;
+    float h = dim.z;
+    float t = dim.y;
+    float w = dim.x;
     vec3 v = objects[2].orient * (pos - objects[2].position);
-    vec3 b = v - vec3(-0.0,0,0.2);
-    float cone = sphereSDF(b, 0.1);
-    cone = unionSDF(cone, sphereSDF(v, 0.1));
-    return cone;
+    // y is towards, x is right, z is up
+    v = v.zxy;
+    vec3 u = v - vec3(w-h,0,0);
+    v = v + vec3(-w,0,-w*.75); 
+    // B
+    float z = prismSDF(v, vec3(h*ONE_SIXTH,t*0.5,h*.5));
+    z = unionSDF(z, cylinderSDF(v +  h*vec3(ONE_SIXTH, 0, -.25), vec2(.25 * h,.5*t)));
+    z = unionSDF(z, cylinderSDF(v +  h*vec3(ONE_SIXTH, 0, ONE_SIXTH), vec2(ONE_THIRD * h,.5*t)));
+    // L
+    v = v + vec3(h, 0 ,0);
+    z = unionSDF(z, prismSDF(v, vec3(h*ONE_SIXTH,t*0.5,h*.5)));
+    z = unionSDF(z, prismSDF(v + h*vec3(ONE_THIRD, 0, ONE_THIRD), 
+        vec3(h*ONE_SIXTH,t*0.5,h*ONE_SIXTH)));
+    // A
+    v = v + vec3(h,0,0);
+    z = unionSDF(z, prismSDF(A*v, vec3(h*ONE_SIXTH,t*0.5,h*.5)));
+    z = unionSDF(z, prismSDF(transpose(A)*(v + vec3(ONE_THIRD*h, 0, 0)), 
+        vec3(h*ONE_SIXTH,t*0.5,h*.5))); 
+    // C
+    v = v + vec3(h,0,0);
+    z = unionSDF(z, cylinderSDF(v+vec3(ONE_THIRD*h,0,0), vec2(h*.5, .5*t)));
+    z = differenceSDF(z, cylinderSDF(v+vec3(ONE_THIRD*h,0,0), vec2(h*ONE_THIRD, t)));
+    z = differenceSDF(z, prismSDF(v+vec3(.75*h,0,0), vec3(.125*h, t, h)));
+    // K
+    v = v + vec3(h,0,0);
+    z = unionSDF(z, prismSDF(v, vec3(h*ONE_SIXTH,t*0.5,h*.5)));
+    z = unionSDF(z, prismSDF(A*(v+h*vec3(.25, 0, -.2)), vec3(h*ONE_SIXTH,t*0.5,h*ONE_THIRD)));
+    z = unionSDF(z, prismSDF(K*(v+2*h*vec3(.2, 0, .12)), vec3(h*ONE_SIXTH,t*0.5,h*ONE_THIRD)));
+    // H
+    z = unionSDF(z, prismSDF(u, vec3(h*0.1,t*0.5,h*.5)));
+    z = unionSDF(z, prismSDF(u+vec3(ONE_SIXTH*h,0,0), vec3(h*0.1,t*0.5,0.2 * h)));
+    z = unionSDF(z, prismSDF(u+vec3(ONE_THIRD*h,0,0), vec3(h*0.1,t*0.5,h*.5)));
+
+    // O
+    u = u + vec3(h,0,0);
+    z = unionSDF(z, sphereSDF(u+h*ONE_SIXTH*vec3(1,0,0), .5*h));
+    // L
+    u = u + vec3(h, 0 ,0);
+    z = unionSDF(z, prismSDF(u, vec3(h*ONE_SIXTH,t*0.5,h*.5)));
+    z = unionSDF(z, prismSDF(u + h*vec3(ONE_THIRD, 0, ONE_THIRD), 
+        vec3(h*ONE_SIXTH,t*0.5,h*ONE_SIXTH)));
+    // E
+    u = u + vec3(h, 0 ,0);
+    z = unionSDF(z, prismSDF(u, vec3(h*ONE_SIXTH,t*0.5,h*.5)));
+    z = unionSDF(z, prismSDF(u + h*vec3(ONE_THIRD, 0, .4), 
+        vec3(h*ONE_SIXTH,t*0.5,h*0.1)));
+    z = unionSDF(z, prismSDF(u + h*vec3(ONE_THIRD, 0, -.4), 
+        vec3(h*ONE_SIXTH,t*0.5,h*0.1)));
+    z = unionSDF(z, prismSDF(u + h*vec3(ONE_THIRD, 0, 0), 
+        vec3(h*0.1,t*0.5,h*0.1)));
+
+    return z;
 }
 
 vec4 phong(Material obj, vec3 pos, vec3 viewDir, mat3 system);
