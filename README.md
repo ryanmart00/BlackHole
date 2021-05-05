@@ -6,11 +6,11 @@ This project aims to simulate the visual aspect of being near a Black Hole accor
 
 The project uses GLFW, GLM, and Freetype 2, all used in accordance with their respective licencing agreements. Links to their websites are given below:
 
-[GLFW!](https://github.com/glfw/glfw)
+[GLFW](https://github.com/glfw/glfw)
 
-[GLM!](https://github.com/g-truc/glm)
+[GLM](https://github.com/g-truc/glm)
 
-[Freetype!](https://www.freetype.org/index.html)
+[Freetype](https://www.freetype.org/index.html)
 
 
 ## Pre-built Binaries
