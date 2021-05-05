@@ -2,6 +2,17 @@
 
 <p style="text-align: center;"><img src="/builds/Black_Hole_Clip.gif" width="400"></p>
 
+This project aims to simulate the visual aspect of being near a Black Hole according to Einstein's theory of General Relativity. As an interactive experience the hope is that users will be able to better intuit the dynamics than if just shown pictures.
+
+The project uses GLFW, GLM, and Freetype 2, all used in accordance with their respective licencing agreements. Links to their websites are given below:
+
+[GLFW!](https://github.com/glfw/glfw)
+
+[GLM!](https://github.com/g-truc/glm)
+
+[Freetype!](https://www.freetype.org/index.html)
+
+
 ## Pre-built Binaries
 <a id="raw-url" href="https://raw.githubusercontent.com/ryanmart00/BlackHole/master/builds/Win64/BlackHole.zip"> Windows 64-bit</a>
 
