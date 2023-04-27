@@ -2,7 +2,11 @@
 
 <p style="text-align: center;"><img src="/builds/Black_Hole_Clip.gif" width="400"></p>
 
-This project aims to simulate the visual aspect of being near a Black Hole according to Einstein's theory of General Relativity. As an interactive experience the hope is that users will be able to better intuit the dynamics than if just shown pictures.
+This project aims to simulate the visual aspect of being near a Black Hole according to Einstein's theory of General Relativity. As an interactive experience the hope is that users will be able to better intuit the dynamics than if just shown pictures. In particular, the project uses the geodesics for light in the Schwartzschild (black hole) Geometry to render the scene instead of the usual straight lines we are used to. 
+
+Currently, time has been eliminated from the simulation, but the plan is to incorporate time into the simulation by adding interactable clocks which will tick according to their experience of time. Further extensions would be to allow the black hole to ``spin,'' which is called the Kerr Geometry.
+
+All of the theory for this can be found in ``Semi-Riemannian Geometry With Applications to Relativity'' By Barrett O'Neill.
 
 The project uses GLFW, GLM, and Freetype 2, all used in accordance with their respective licencing agreements. Links to their websites are given below:
 
