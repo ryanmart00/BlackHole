@@ -100,10 +100,11 @@ const int FIELD_PIXEL = 32;
 const float FACTOR = 1.01;
 const float LOOP_NUM = log(4)/log(FACTOR);
 
-const float M = log(0.1)/log(FACTOR);
-const float MAX_STEP_SIZE = log(0.015f)/log(FACTOR);
+const float INIT_RS = log(0.1)/log(FACTOR);
+const float INIT_STEP_SIZE = log(0.5f)/log(FACTOR);
 const float THRESHOLD = 0.00001f;
-const float MAX_DISTANCE = log(30.0f)/log(FACTOR);
+const float INIT_MAX_DISTANCE = log(100.0f)/log(FACTOR);
+const float INIT_LOOP = log(4.0f)/log(FACTOR);
 const float EPSILON = 0.00001f;
 
 const float FOV = 800/tan(glm::radians(45.0f)/2);
@@ -116,6 +117,8 @@ const float MIN_PLAYER_SPEED = 0.1;
 const float UP_CLAMP = 0.95f;
 
 const float ORBIT_RATE = glm::radians(45.0f);
+
+const float PI = glm::radians(360.0f);
 
 
 

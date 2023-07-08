@@ -24,6 +24,7 @@
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <iomanip>
 #include "shader.hpp"
 #include "camera.hpp"
 #include "constants.hpp"
@@ -49,21 +50,26 @@ enum SimState
     PAUSE
 } state = TITLE;
 
-const int NUM_FIELDS = 6;
+const int NUM_FIELDS = 8;
 const int SLIDER_START = 4;
 
 enum Sliders
 {
     STEP = 0,
-    MASS = 1,
+    LOOP = 1,
+    DIST = 2,
+    RS = 3,
 };
 
 std::string fieldNames[NUM_FIELDS] = {"Exit Simulation", "Restart Simulation", 
 	"Reset Constants", 
     "Resume Simulation", 
     "Simulation Step  (smaller => more accurate/much slower): ",
-    "Black Hole Mass (more mass => larger): "};
-float sliders[NUM_FIELDS - SLIDER_START] = {MAX_STEP_SIZE, M};
+    "Num Loops: ",
+    "Max Distance: ",
+    "Schwartzschild Radius: "};
+float sliders[NUM_FIELDS - SLIDER_START] = {INIT_STEP_SIZE, INIT_LOOP, 
+    INIT_MAX_DISTANCE, INIT_RS};
 
 GLuint tex;
 GLuint textVAO = 0;
@@ -258,19 +264,19 @@ int main()
     //
     Shader text{"assets/text.vs", "assets/text.fs"};
 
-    Shader march{"assets/march.vs", "assets/march.fs"};
+    Shader march{"assets/march.vs", "assets/symplectic.fs"};
     march.use();
-    march.setFloat("M", glm::pow(FACTOR, sliders[MASS]));
+    march.setFloat("RS", glm::pow(FACTOR, sliders[RS]));
     march.setVec4("BlackHoleColor", BLACKHOLE_COLOR);
     march.setVec4("BackgroundColor", BACKGROUND_COLOR);
     march.setFloat("Threshold", THRESHOLD);
     march.setFloat("EPSILON", EPSILON);
     march.setFloat("MaxStep", glm::pow(FACTOR, sliders[STEP]));
-    march.setFloat("LOOP", 4);
-    march.setFloat("MaxDist", 100);
+    march.setFloat("LOOP", glm::pow(FACTOR, sliders[LOOP]));
+    march.setFloat("MaxDist", glm::pow(FACTOR, sliders[DIST]));
 
     // Set point lights
-    march.setVec3("Lights[0].position", glm::vec3{6.0f, 0.0f, 6.0f});
+    march.setVec3("Lights[0].position", glm::vec3{0.0f, 0.0f, 0.0f});
     march.setVec3("Lights[0].ambient", glm::vec3{0.5f, 0.5f, 0.5f});
     march.setVec3("Lights[0].diffuse", glm::vec3{1.0f, 1.0f, 1.0f});
     march.setVec3("Lights[0].specular", glm::vec3{1.0f, 1.0f, 1.0f});
@@ -283,6 +289,12 @@ int main()
     march.setVec3("Lights[1].ambient", glm::vec3{0.5f, 0.5f, 0.5f});
     march.setVec3("Lights[1].diffuse", glm::vec3{1.0f, 1.0f, 1.0f});
     march.setVec3("Lights[1].specular", glm::vec3{1.0f, 1.0f, 1.0f});
+
+    // Set SpotLight
+    march.setVec3("SpotLight.position", glm::vec3{0.0f, 0.0f, 0.0f});
+    march.setVec3("SpotLight.ambient", glm::vec3{0.5f, 0.5f, 0.5f});
+    march.setVec3("SpotLight.diffuse", glm::vec3{1.0f, 1.0f, 1.0f});
+    march.setVec3("SpotLight.specular", glm::vec3{1.0f, 1.0f, 1.0f});
 
 
     Object stat(march, glm::vec3{0.3, 0.0, 0.0}, glm::vec3{1.0, 0.0, 0.0},
@@ -324,8 +336,10 @@ int main()
         {
             // Update objects
             march.use();
-            march.setFloat("M", glm::pow(FACTOR, sliders[MASS]));
+            march.setFloat("RS", glm::pow(FACTOR, sliders[RS]));
             march.setFloat("MaxStep", glm::pow(FACTOR, sliders[STEP]));
+            march.setFloat("LOOP", glm::pow(FACTOR, sliders[LOOP]));
+            march.setFloat("MaxDist", glm::pow(FACTOR, sliders[DIST]));
             pole.setPosition(march, glm::vec3{0, 0, 0});
                     
             pole.setOrientation(march, 
@@ -338,6 +352,7 @@ int main()
                    glm::mat3(glm::angleAxis((float)(ORBIT_RATE * localTime), 
                    glm::vec3{1.0f, 1.0f, 0.0f})));
             march.setVec3("Cam", cam.position_);
+            march.setVec3("CamDir", cam.getForward());
             march.setMat3("View", glm::mat3{cam.orientation_});
             
 
@@ -355,6 +370,15 @@ int main()
             renderText(face, text, (std::string("FPS: ") 
                         + std::to_string((int)(1/dt))).c_str(), 
                         -1 + 8 * sx, 1 - 50 * sy, sx, sy);
+
+            //Show Radius
+            float radius = glm::length(cam.position_)/glm::pow(FACTOR, sliders[RS]);
+            std::stringstream stream;
+            stream << std::fixed << std::setprecision(2) << radius;
+
+            FT_Set_Pixel_Sizes(face, 0, 48);
+            renderText(face, text, (std::string("Radius: ") 
+                + stream.str()).c_str(), -1 + 8 * sx, -1 + 50* sy, sx, sy);
         }
 
         float SX = 2.0 / SCR_WIDTH;
@@ -488,7 +512,7 @@ void cursor_position_callback(GLFWwindow*, double xpos, double ypos)
 
 void scroll_callback(GLFWwindow*, double , double y)
 {
-    sliders[MASS] -= y;
+    sliders[RS] -= y;
 
 }
 
@@ -526,8 +550,10 @@ void mouse_button_callback(GLFWwindow* window, int button, int action, int )
                 cam = Camera{glm::vec3{5,0,0}, glm::vec3{-1,0,0}, glm::vec3{0,1,0}};
 	        break;
 	    case 2: // constants
-                sliders[MASS] = M;
-                sliders[STEP] = MAX_STEP_SIZE;
+                sliders[RS] = INIT_RS;
+                sliders[LOOP] = INIT_LOOP;
+                sliders[DIST] = INIT_MAX_DISTANCE;
+                sliders[STEP] = INIT_STEP_SIZE;
                 break;
             case 3: //resume
                 state = RUNNING;
@@ -561,7 +587,7 @@ void pollInput(GLFWwindow *window, float dt)
     if(state == RUNNING)
     {
         float dist = dt*glm::clamp(PLAYER_SPEED * glm::length(cam.position_) 
-                - 2*glm::pow(FACTOR, sliders[MASS]), MIN_PLAYER_SPEED, MAX_PLAYER_SPEED);
+                - 2*glm::pow(FACTOR, sliders[RS]), MIN_PLAYER_SPEED, MAX_PLAYER_SPEED);
         glm::vec3 dir = glm::vec3{0};
         bool moved = false;
         if(glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS)
@@ -611,7 +637,7 @@ void pollInput(GLFWwindow *window, float dt)
                 x = glm::normalize(x);
                 z = glm::normalize(z);
                 glm::vec3 y = glm::cross(z, x); //My own special twist
-                y = normalize(y);
+                y = glm::normalize(y);
                 // this is the transpose of the orthonormal basis constructed above 
                 // and is thus the inverse transformation
                 glm::mat3 system = glm::mat3(x,y,z);
@@ -621,7 +647,7 @@ void pollInput(GLFWwindow *window, float dt)
                     * glm::vec2(1, -localDir.x / localDir.z);
                 float h = dist * data.x/sqrt(data.y*data.y + 1);
                 data = stepDE(data, h);
-                glm::vec3 newDir = normalize(system *
+                glm::vec3 newDir = glm::normalize(system *
                         glm::vec3{-data.y/data.x/data.x * cos(h) - 1/data.x * sin(h),
                         0,
                         -data.y/data.x/data.x * sin(h) + 1/data.x * cos(h)});
@@ -672,5 +698,5 @@ glm::vec2 stepDE(glm::vec2 data, float h)
 // Returns <du, d^2u>
 glm::vec2 f(glm::vec2 y)
 {
-    return glm::vec2(y.y, 3 * glm::pow(FACTOR, sliders[MASS]) * y.x * y.x - y.x);
+    return glm::vec2(y.y, 3 * glm::pow(FACTOR, sliders[RS]) * y.x * y.x - y.x);
 }
