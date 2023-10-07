@@ -6,7 +6,7 @@ int Clock::Num = 0;
 Clock::Clock(Shader& s, glm::vec3 pos, glm::mat3 ori, glm::vec4 dim, bool geo,
             glm::vec3 rim_amb, glm::vec3 rim_diff, glm::vec3 rim_spec, float rim_shine,
             glm::vec3 hand_amb, glm::vec3 hand_diff, glm::vec3 hand_spec, float hand_shine) :
-    shader_{s}, position_{pos}, seconds_{ori}, tenths_{glm::mat3{1.0f}}, dimensions_{dim}, 
+    shader_{s}, position_{pos}, seconds_{0}, tenths_{0}, dimensions_{dim}, 
     geodesic_{geo}
 {
     num_ = Num;
@@ -22,13 +22,13 @@ Clock::Clock(Shader& s, glm::vec3 pos, glm::mat3 ori, glm::vec4 dim, bool geo,
     s.setVec3("clocks[" + std::to_string(num_) + "].hand.specular", hand_spec);
     s.setFloat("clocks[" + std::to_string(num_) + "].hand.shininess", hand_shine);
 
-    s.setVec3("clocks[" + std::to_string(num_) + "].position", position);
+    s.setVec3("clocks[" + std::to_string(num_) + "].position", position_);
     s.setVec3("clocks[" + std::to_string(num_) + "].dimensions", dim);
-    s.setVec3("clocks[" + std::to_string(num_) + "].seconds", seconds);
-    s.setVec3("clocks[" + std::to_string(num_) + "].tenths", tenths);
+    s.setFloat("clocks[" + std::to_string(num_) + "].seconds", seconds_);
+    s.setFloat("clocks[" + std::to_string(num_) + "].tenths", tenths_);
 }
 
-Clock::update(float dt)
+void Clock::update(float dt)
 {
     if(geodesic_)
     {
@@ -37,10 +37,8 @@ Clock::update(float dt)
     else
     {
         //update proper time = global time
-        seconds_ = seconds_ * glm::angleAxis(PI/60 * dt, UP);
-        tenths_ = tenths_ * glm::angleAxis(PI * dt, UP);
-        s.setVec3("clocks[" + std::to_string(num_) + "].seconds", seconds_);
-        s.setVec3("clocks[" + std::to_string(num_) + "].tenths", tenths_);
+        shader_.setFloat("clocks[" + std::to_string(num_) + "].seconds", seconds_);
+        shader_.setFloat("clocks[" + std::to_string(num_) + "].tenths", tenths_);
         
     }
 }

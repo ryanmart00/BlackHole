@@ -15,10 +15,10 @@ public:
     static int Num;
 
     int num_;
-    Shader& s_;
+    Shader& shader_;
     glm::vec3 position_;
-    glm::mat3 seconds_;
-    glm::mat3 tenths_;
+    float seconds_;
+    float tenths_;
     glm::vec4 dimensions_;
     bool geodesic_;
 
