@@ -21,8 +21,8 @@ if(WIN32)
     set(WIN_LINKS "gdi32")
 elseif(APPLE)
     message("APPLE")
-    set(CMAKE_CXX_FLAGS "-DNS_FORMAT_ARGUMENT(A)= -O1")
-    set(CMAKE_C_FLAGS "-DNS_FORMAT_ARGUMENT(A)= -O1")
+    # set(CMAKE_CXX_FLAGS "-DNS_FORMAT_ARGUMENT(A)= -O1")
+    # set(CMAKE_C_FLAGS "-DNS_FORMAT_ARGUMENT(A)= -O1")
 endif()
 
 
