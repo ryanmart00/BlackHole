@@ -19,7 +19,10 @@ if(WIN32)
     set(ENABLE_PRECOMPILED_HEADERS OFF)
     add_definitions(-DGCC_WINDRES)
     set(WIN_LINKS "gdi32")
-endif(WIN32)
+elseif(APPLE)
+    set(CMAKE_CXX_FLAGS "-DNS_FORMAT_ARGUMENT(A)= -O1")
+endif()
+
 
 
 #include glm (header only library)
